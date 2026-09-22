@@ -21,7 +21,6 @@ from pb.trace.schema import ArgumentFact, Call, RawArgument, Role, Span, Trust
 def _call(tool: str, call_id: str = "c1", **kwargs: str) -> Call:
     return Call(
         call_id=call_id,
-        span_id="s-call",
         tool=tool,
         arguments=tuple(RawArgument(param_name=k, value_repr=v) for k, v in kwargs.items()),
     )

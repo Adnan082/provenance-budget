@@ -70,7 +70,6 @@ class Call:
     labeller under evaluation (CLAUDE.md 'Replay discipline')."""
 
     call_id: str
-    span_id: str
     tool: str
     arguments: tuple[RawArgument, ...] = field(default_factory=tuple)
     event: EventType = "call"
