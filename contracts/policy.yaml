@@ -1,0 +1,42 @@
+# contracts/policy.yaml — DRAFT, not yet reviewed or frozen.
+#
+# Generic (role -> min_trust) rules only. No tool-specific overrides yet — auditing
+# individual tools (e.g. whether send_money's `target` needs TRUSTED rather than the
+# default USER) is week-3 work, not something to guess ahead of the threat-model
+# review. See SPEC.md "Open questions" and THREAT_MODEL.md §3.
+#
+# Rule of thumb applied below: an argument must be at least as trusted as its role is
+# consequential. `target` and `command` gate where/what an action does, so they block
+# on violation. `control` (timing/flags) escalates rather than blocks — lower blast
+# radius than redirecting an action outright. `selector` only needs TOOL_OUTPUT, since
+# picking among the agent's own prior results is low-risk. `credential` requires
+# TRUSTED outright — a credential-role argument should never be attacker-influenced.
+# `content` is intentionally unrestricted here: this project's threat model excludes
+# text-to-text harms (THREAT_MODEL.md §6), so payload content itself isn't policed,
+# only where it's allowed to go (via `target`) and what it's allowed to trigger (via
+# `command`).
+
+rules:
+  - role: credential
+    min_trust: TRUSTED
+    on_violation: block
+
+  - role: command
+    min_trust: USER
+    on_violation: block
+
+  - role: target
+    min_trust: USER
+    on_violation: block
+
+  - role: control
+    min_trust: USER
+    on_violation: escalate
+
+  - role: selector
+    min_trust: TOOL_OUTPUT
+    on_violation: escalate
+
+  - role: content
+    min_trust: EXTERNAL
+    on_violation: allow

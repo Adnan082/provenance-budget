@@ -38,6 +38,14 @@ All three are always reported together — no figure shows only one without the 
 - **`C-empirical`** — errors resampled from the observed confusion of real labellers (`L1`, `L2`), conditioned on role and on whether the trace is under attack. This is what "realistic noise" actually looks like, as opposed to the uniform idealization.
 - **`C-adversarial`** — corrupt exactly the arguments the attack needs, up to ε·N flips. **The headline curve.** An attacker who can influence what a labeller sees (§4 of `THREAT_MODEL.md`, "labeller-targeted injection") doesn't produce uniform or even realistically-distributed errors — it produces the worst ε-budget-constrained error the attack can buy. If the paper shows one curve, it's this one; the other two exist to show it isn't cherry-picked.
 
+### Role assignment: deterministic vs. predicted
+
+A design question the labeller descriptions above don't settle on their own: does *role* (the six-way taxonomy) get predicted by each labeller the way trust does, or is it fixed infrastructure?
+
+Resolved as: **role is a deterministic function of `(tool, param_name)`** (`src/pb/enforce/roles.py`), applied identically for `L0`, `L1`, `L3`, and `L4` — because which parameter position an argument occupies is knowable from the tool's own schema, not something genuinely ambiguous the way *how much to trust it* is. `L2` (llm_infer) is the one exception: it predicts role independently, the way a real PACT-style labeller would when it doesn't have privileged access to a hand-built schema table, which is what makes `RoleAcc` a non-trivial metric specifically for `L2` (and, once role prediction is added there, any future labeller in the same position). This is also why `F3`'s echo-vs-llm_infer comparison is scoped to `TrustAcc` and `ASR_t` only, not `RoleAcc` — trust is the axis both labellers are actually competing on.
+
+Consequence: the `eps_fn`/`eps_fp` corruption directions in `L4` only ever perturb trust, never role, consistent with the metric definitions in §4 below being trust-specific.
+
 ## 4. Metrics — why these and not others
 
 | Name | Meaning | Why it's here |
@@ -104,7 +112,9 @@ See `CLAUDE.md` "Milestones and kill criteria" for the authoritative week-by-wee
 
 ## Open questions before this is final
 
-1. `contracts/*.yaml` — the actual enforcement policy. Nothing in `make budget` (week 3) can run until this exists.
+1. `contracts/*.yaml` — **draft exists** (`contracts/policy.yaml`, 6 generic role-level rules, no tool-specific overrides), but not reviewed or frozen. `src/pb/enforce/monitor.py` and its tests are built against the draft; auditing individual tools (e.g. does `send_money`'s `target` really only need USER-level trust?) is still open.
 2. `PREREGISTRATION.md` itself — this document summarizes what it will say; it still needs to be written and hashed as a week-1 deliverable.
 3. Exact AgentDojo family → dev/test split list, and the "50% of authored families" split — needs the authored attack families to exist first (`src/pb/attacks/`).
 4. The open-weight model used for both `L4`'s empirical corruption model and the week-5 white-box attack — not yet chosen.
+5. `src/pb/enforce/roles.py` has a **draft** `(tool, param) -> Role` table covering all 74 AgentDojo v1 tools (agentdojo==0.1.35), cross-checked against the live package's signatures so it's at least internally consistent — but it's one person's (Claude's) first pass by naming heuristics, not the human annotation-agreement pass the week-2 milestone requires. Treat every entry as reviewable, not final.
+6. `make trace` and `L2` (llm_infer) are blocked on an API key — nothing in this environment has one configured. Everything else in weeks 1–3 that doesn't require a live model call (schema, monitor, roles, stats, metrics, blanket/echo/oracle/noisy labellers) is implemented and tested; recording real traces and running the LLM-based labeller are the next things that need credentials before they can move.
