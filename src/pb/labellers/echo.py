@@ -8,6 +8,15 @@ fraction of the argument's own length); below `_MATCH_THRESHOLD` it's treated as
 unattributable and, per schema.py's ArgumentFact convention, assumed to be a literal
 the agent constructed itself — TRUSTED, no source span.
 
+Once a span is matched, trust is read off `span.kind` via `_KIND_TRUST`, not from any
+hidden ground truth (schema.Span carries none — see its docstring). Every kind other
+than "system_prompt"/"user_message" — i.e. every flavor of tool-result span — maps to
+the same TOOL_OUTPUT guess. That's not a simplification to fix later: it's the actual,
+structural blind spot a same-only-matches-text labeller has. Echo has no way to tell
+"my own account balance" from "an email body an attacker wrote" — both are just
+"content that came back from a tool call" to a matcher that only looks at text
+overlap. That blind spot is exactly what this project measures the cost of.
+
 Role, as with blanket, comes from enforce/roles.py's deterministic assignment."""
 from __future__ import annotations
 
@@ -18,6 +27,16 @@ from pb.labellers.base import Labeller, LabellerCost
 from pb.trace.schema import ArgumentFact, Call, Span, Trust
 
 _MATCH_THRESHOLD = 0.6
+
+_KIND_TRUST: dict[str, Trust] = {
+    "system_prompt": "TRUSTED",
+    "user_message": "USER",
+}
+_DEFAULT_KIND_TRUST: Trust = "TOOL_OUTPUT"
+
+
+def _trust_for_kind(kind: str) -> Trust:
+    return _KIND_TRUST.get(kind, _DEFAULT_KIND_TRUST)
 
 
 def _normalize(text: str) -> str:
@@ -55,7 +74,7 @@ class EchoLabeller(Labeller):
             trust: Trust
             source_span_id: str | None
             if span is not None and ratio >= _MATCH_THRESHOLD:
-                trust, source_span_id = span.trust, span.span_id
+                trust, source_span_id = _trust_for_kind(span.kind), span.span_id
             else:
                 trust, source_span_id = "TRUSTED", None
             facts.append(

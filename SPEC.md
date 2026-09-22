@@ -46,6 +46,12 @@ Resolved as: **role is a deterministic function of `(tool, param_name)`** (`src/
 
 Consequence: the `eps_fn`/`eps_fp` corruption directions in `L4` only ever perturb trust, never role, consistent with the metric definitions in §4 below being trust-specific.
 
+### Why a recorded Span carries no trust field
+
+A tempting shortcut: record each span's true trust at recording time (the recorder, having constructed the environment, knows exactly which content is an injected payload) and let labellers read it off. This was actually the first draft — and it's wrong, because it makes every labeller that matches an argument to a span trivially "correct": echo would score ~100% `TrustAcc` by copying a field it should have no access to, and the whole measurement collapses.
+
+The fix: a `Span` records only what the agent itself observed — `kind` (which slot the content came from: system prompt, user message, or the result of calling a specific tool) and `content_repr`. True trust for tool-result spans is not recorded on the span at all; it lives only in `labels/oracle.jsonl`, addressed by *argument*, built separately by the annotation pipeline in §9, and is never passed into a `Labeller`. `echo` (`L1`) has to fall back to a crude kind-based guess — every `tool_result:*` kind gets the same default (`TOOL_OUTPUT`) regardless of what's actually in it — which is a real, useful modeling fact: it's *why* echo can't distinguish "my own account balance" from "an email body an attacker wrote," both of which look identical to a text-matcher that only sees "content that came back from a tool call." That blind spot, not an implementation detail, is the thing worth measuring `eps_fn` against.
+
 ## 4. Metrics — why these and not others
 
 | Name | Meaning | Why it's here |

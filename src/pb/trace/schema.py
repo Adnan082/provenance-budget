@@ -37,11 +37,20 @@ class Span:
     """A unit of content the agent observed: a system prompt, a user message, a tool
     result. `span_id` is content-addressed and stable across runs (CLAUDE.md
     'Conventions') so the same content always gets the same id regardless of when it
-    was recorded. `content_repr` is truncated at write time — never the raw payload."""
+    was recorded. `content_repr` is truncated at write time — never the raw payload.
+
+    Deliberately carries no `trust` field. A span's *true* trust (especially for a
+    tool-result span: is this TOOL_OUTPUT or EXTERNAL?) is exactly what this project
+    measures labellers guessing — if the recorded trace told them the answer, every
+    labeller would score perfectly by construction. `kind` is the only thing a
+    labeller may use to infer trust (e.g. echo treats every "tool_result:*" kind
+    identically, which is precisely the blind spot that makes it unable to
+    distinguish TOOL_OUTPUT from EXTERNAL — see labellers/echo.py). The true trust
+    lives only in labels/oracle.jsonl, addressed by argument, not by span, and is
+    never passed into a Labeller's `prefix`."""
 
     span_id: str
     kind: str
-    trust: Trust
     content_repr: str
     event: EventType = "span"
 
