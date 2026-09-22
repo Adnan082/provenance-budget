@@ -37,3 +37,7 @@ disallow_untyped_defs = false
 [[tool.mypy.overrides]]
 module = "pb.enforce.*"
 strict = true
+
+[[tool.mypy.overrides]]
+module = "agentdojo.*"
+ignore_missing_imports = true
