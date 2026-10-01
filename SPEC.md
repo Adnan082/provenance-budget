@@ -97,7 +97,7 @@ This is why `src/pb/trace/divergence.py` exists as its own module rather than a 
 
 ## 8. Pre-registered failure conditions
 
-Authoritative copy lives in `PREREGISTRATION.md` (not yet created — a week-1 deliverable per the milestone table, hashed and dated once written, never edited above the line after that per CLAUDE.md rule 1). Reproduced here with the *reason each one is pre-registered*, which is the part a bare list loses:
+Authoritative copy lives in `PREREGISTRATION.md` — drafted, not yet hashed (pending the week-1 pilot's measured seed variance, divergence rate, and discordance rate, plus author sign-off, per CLAUDE.md rule 1). Reproduced here with the *reason each one is pre-registered*, which is the part a bare list loses:
 
 - **F1 — flat surface.** Under `C-adversarial`, `ASR_t` at ε_fn=0.30 differs from ε_fn=0 by <5pp **and** `BTC` at ε_fp=0.30 differs from ε_fp=0 by <5pp. → Perception isn't the binding constraint; the labeller-accuracy question this whole project asks turns out not to matter much, and that's reported, not massaged into significance by picking a different ε or corruption model after the fact.
 - **F2 — no ground truth.** Intra-annotator κ <0.60 (trust) or <0.50 (role) over 200 doubly-labelled arguments. → If the author can't agree with themselves on provenance labels, "argument-level provenance" isn't a well-posed construct for this threat model, and that becomes the headline instead of any downstream number that would rest on ill-defined ground truth.
@@ -119,7 +119,7 @@ See `CLAUDE.md` "Milestones and kill criteria" for the authoritative week-by-wee
 ## Open questions before this is final
 
 1. `contracts/*.yaml` — **draft exists** (`contracts/policy.yaml`, 6 generic role-level rules, no tool-specific overrides), but not reviewed or frozen. `src/pb/enforce/monitor.py` and its tests are built against the draft; auditing individual tools (e.g. does `send_money`'s `target` really only need USER-level trust?) is still open.
-2. `PREREGISTRATION.md` itself — this document summarizes what it will say; it still needs to be written and hashed as a week-1 deliverable.
+2. `PREREGISTRATION.md` — **draft exists**, self-contained (not just a summary). Not yet hashed: that needs the week-1 pilot's measured quantities (seed variance, divergence rate, discordance rate — all marked PENDING in the document) filled in, plus author sign-off, before CLAUDE.md rule 1's freeze takes effect.
 3. Exact AgentDojo family → dev/test split list, and the "50% of authored families" split — needs the authored attack families to exist first (`src/pb/attacks/`).
 4. The open-weight model used for both `L4`'s empirical corruption model and the week-5 white-box attack — not yet chosen.
 5. `src/pb/enforce/roles.py` has a **draft** `(tool, param) -> Role` table covering all 74 AgentDojo v1 tools (agentdojo==0.1.35), cross-checked against the live package's signatures so it's at least internally consistent — but it's one person's (Claude's) first pass by naming heuristics, not the human annotation-agreement pass the week-2 milestone requires. Treat every entry as reviewable, not final.
